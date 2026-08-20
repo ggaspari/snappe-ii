@@ -15,7 +15,10 @@ score SNAPPE-II (Score for Neonatal Acute Physiology, Perinatal Extension II).
 
 ## Uso
 
-Abra `index.html` em qualquer navegador — não requer servidor nem instalação.
+Acesse **https://ggaspari.github.io/snappe-ii/**.
+
+Alternativamente, baixe o `index.html` e abra localmente na sua instituição
+para acesso off-line — não requer servidor nem instalação.
 
 ## Aviso
 
