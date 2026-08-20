@@ -11,6 +11,7 @@ score SNAPPE-II (Score for Neonatal Acute Physiology, Perinatal Extension II).
   a partir do peso ao nascer e da idade gestacional informados, usando o percentil 3
   combinado de Alexander GR et al., Obstet Gynecol. 1996;87:163–168 — mesmos valores
   de corte reproduzidos pela calculadora da SFAR.
+- Tema claro/escuro alternável (botão no cabeçalho), com preferência salva no navegador.
 
 ## Uso
 
@@ -21,3 +22,8 @@ Abra `index.html` em qualquer navegador — não requer servidor nem instalaçã
 Ferramenta de apoio clínico. Não substitui julgamento médico nem validação
 local. Não coleta, armazena ou transmite dados — todo cálculo ocorre
 localmente no navegador.
+
+## Licença
+
+Distribuído sob a [licença MIT](LICENSE) — uso, cópia e modificação livres,
+sem garantia de qualquer tipo (inclusive de adequação a uso clínico real).
