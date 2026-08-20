@@ -170,9 +170,9 @@
 
   .mortality-box{border-top:1px solid var(--border-soft); border-bottom:1px solid var(--border-soft); padding:16px 0;}
   .mort-row{display:flex; align-items:center; gap:14px; margin-top:8px;}
-  .mort-pct{font-family:var(--mono); font-size:36px; font-weight:700; color:var(--text-dim); line-height:1; min-width:90px;}
+  .mort-pct{font-family:var(--mono); font-size:36px; font-weight:700; color:var(--text-dim); line-height:1; min-width:90px; flex-shrink:0;}
   .mort-pct.on{color:var(--cyan);} .mort-pct.mid{color:var(--amber);} .mort-pct.hi{color:var(--red);}
-  .mort-meta{display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-dim);}
+  .mort-meta{display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-dim); flex:1; min-width:0;}
   .mort-band{font-family:var(--mono); font-size:10.5px; color:var(--text-faint);}
   .mort-note{font-size:11px; color:var(--text-faint); line-height:1.5; margin-top:10px;}
 
