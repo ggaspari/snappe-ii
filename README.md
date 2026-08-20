@@ -7,6 +7,10 @@ score SNAPPE-II (Score for Neonatal Acute Physiology, Perinatal Extension II).
 - Mortalidade estimada por faixa de escore e peso ao nascer (<1500 g / ≥1500 g),
   reproduzida da tabela de calibração da coorte original (N=25.429), via
   calculadora da SFAR (sfar.org/scores2/snap22.php).
+- Classificação de PIG (pequeno para idade gestacional) calculada automaticamente
+  a partir do peso ao nascer e da idade gestacional informados, usando o percentil 3
+  combinado de Alexander GR et al., Obstet Gynecol. 1996;87:163–168 — mesmos valores
+  de corte reproduzidos pela calculadora da SFAR.
 
 ## Uso
 

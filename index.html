@@ -213,7 +213,8 @@
       <div class="ref">
         Fonte da tabela de pontos: Richardson DK, Corcoran JD, Escobar GJ, Lee SK. SNAP-II and SNAPPE-II: simplified newborn illness severity and mortality risk scores. J Pediatr. 2001;138:92–100.<br><br>
         As faixas de risco (baixa/moderada/alta) são orientativas — pontos de corte publicados em diferentes populações variam de ~27 a ~40.<br><br>
-        Mortalidade estimada: tabela de calibração da coorte de validação original (N=25.429), por faixa de escore e peso ao nascer (&lt;1500 g / ≥1500 g), reproduzida pela calculadora da SFAR (sfar.org/scores2/snap22.php). É uma probabilidade agregada por faixa de escore — não uma equação logística individual — e não substitui validação local.
+        Mortalidade estimada: tabela de calibração da coorte de validação original (N=25.429), por faixa de escore e peso ao nascer (&lt;1500 g / ≥1500 g), reproduzida pela calculadora da SFAR (sfar.org/scores2/snap22.php). É uma probabilidade agregada por faixa de escore — não uma equação logística individual — e não substitui validação local.<br><br>
+        Classificação de PIG: peso ao nascer abaixo do percentil 3 para a idade gestacional, tabela combinada de Alexander GR, Himes JH, Kaufman RB, Mor J, Kogan M. A United States national reference for fetal growth. Obstet Gynecol. 1996;87:163–168 — valores de corte reproduzidos pela mesma calculadora da SFAR (sfar.org/scores2/snap22.php).
       </div>
     </aside>
   </div>
@@ -261,6 +262,20 @@ const MORT_OBSERVED = {
   under1500: [0.6, 2.7, 5.2, 9.5, 15.9, 22.6, 32.7, 38.0, 66.7],
   over1500:  [0.3, 1.1, 2.9, 5.2, 15.4, 20.9, 32.0, 42.9, 66.7],
 };
+
+// ---------- SGA/PIG cutoff (Alexander GR et al. Obstet Gynecol 1996;87:163-8) ----------
+// 3rd percentile birth weight (g) by gestational age, combined reference — reproduced
+// from the same SFAR calculator used above for the mortality tables (sfar.org/scores2/snap22.php).
+const GA_SGA_P3 = {
+  22:320, 23:380, 24:430, 25:500, 26:580, 27:670, 28:740, 29:820, 30:920,
+  31:1030, 32:1140, 33:1280, 34:1420, 35:1580, 36:1750, 37:1920, 38:2120,
+  39:2350, 40:2520, 41:2660, 42:2750,
+};
+
+function sgaCutoffGrams(ga){
+  if(ga===null || ga===undefined || isNaN(ga)) return null;
+  return GA_SGA_P3[ga] ?? GA_SGA_P3[42];
+}
 
 function bandIndexForScore(score){
   for(let i=0;i<MORT_BANDS.length;i++){
@@ -368,14 +383,47 @@ const fields = [
     points:(v)=> v===null?0:v
   },
   {
-    id:'bw', section:'perinatal', title:'Peso ao nascer', hint:'Peso de nascimento em gramas — usado também na estratificação da mortalidade estimada', max:17,
+    id:'bw', section:'perinatal', title:'Peso ao nascer', hint:'Peso de nascimento em gramas — usado também na estratificação da mortalidade estimada e na classificação automática de PIG', max:17,
     type:'number', unit:'g', step:10,
     points:(v)=> v===null?0: v<750?17 : v<1000?10 : 0
   },
   {
-    id:'sga', section:'perinatal', title:'PIG', hint:'Pequeno para idade gestacional (<p3)', max:12,
-    type:'toggle',
-    points:(v)=> v===true?12:0
+    id:'ga', section:'perinatal', title:'Idade gestacional', hint:'Idade gestacional ao nascimento — usada para calcular automaticamente se o peso está abaixo do percentil 3 (PIG)', max:0, scored:false,
+    type:'select', unit:'semanas', storeRaw:true,
+    options:[
+      {label:'22 semanas', value:22},
+      {label:'23 semanas', value:23},
+      {label:'24 semanas', value:24},
+      {label:'25 semanas', value:25},
+      {label:'26 semanas', value:26},
+      {label:'27 semanas', value:27},
+      {label:'28 semanas', value:28},
+      {label:'29 semanas', value:29},
+      {label:'30 semanas', value:30},
+      {label:'31 semanas', value:31},
+      {label:'32 semanas', value:32},
+      {label:'33 semanas', value:33},
+      {label:'34 semanas', value:34},
+      {label:'35 semanas', value:35},
+      {label:'36 semanas', value:36},
+      {label:'37 semanas', value:37},
+      {label:'38 semanas', value:38},
+      {label:'39 semanas', value:39},
+      {label:'40 semanas', value:40},
+      {label:'41 semanas', value:41},
+      {label:'≥ 42 semanas', value:42},
+    ],
+    points:()=>0
+  },
+  {
+    id:'sga', section:'perinatal', title:'PIG', hint:'Calculado automaticamente a partir do peso e da idade gestacional informados acima — peso abaixo do percentil 3 (Alexander et al. 1996, tabela combinada por IG)', max:12,
+    type:'derived',
+    points:()=>{
+      const cutoff = sgaCutoffGrams(state.ga);
+      const bw = state.bw;
+      if(cutoff===null || bw===null || bw===undefined || isNaN(bw)) return 0;
+      return bw < cutoff ? 12 : 0;
+    }
   },
   {
     id:'apgar', section:'perinatal', title:'Apgar de 5º minuto', hint:'Escore de Apgar no 5º minuto de vida', max:18,
@@ -393,7 +441,7 @@ const state = {}; // id -> raw value(s)
 function cardHTML(f, i){
   let body = '';
   if(f.type === 'select'){
-    const opts = f.options.map((o,oi)=>`<option value="${oi}">${o.label}${f.unit? '' : ''} — ${o.points} pts</option>`).join('');
+    const opts = f.options.map((o,oi)=>`<option value="${oi}">${o.label}${f.scored===false ? '' : ' — '+o.points+' pts'}</option>`).join('');
     body = `
       <div class="field-row">
         <select class="sel" id="in-${f.id}">
@@ -401,6 +449,8 @@ function cardHTML(f, i){
           ${opts}
         </select>
       </div>`;
+  } else if(f.type === 'derived'){
+    body = `<div class="unit" id="derived-${f.id}" style="margin-top:2px;">Informe peso e idade gestacional</div>`;
   } else if(f.type === 'number'){
     body = `
       <div class="field-row">
@@ -427,16 +477,18 @@ function cardHTML(f, i){
         <button type="button" data-val="true" id="btn-${f.id}-yes">Sim</button>
       </div>`;
   }
+  const footer = f.scored===false ? '' : `
+      <div class="card-footer">
+        <span class="points-label">Pontos</span>
+        <span class="points-val" id="pts-${f.id}">0</span>
+      </div>`;
   return `
     <div class="card">
       <div class="idx">${String(i+1).padStart(2,'0')}</div>
       <label>${f.title}</label>
       <div class="hint">${f.hint}</div>
       ${body}
-      <div class="card-footer">
-        <span class="points-label">Pontos</span>
-        <span class="points-val" id="pts-${f.id}">0</span>
-      </div>
+      ${footer}
     </div>`;
 }
 
@@ -449,6 +501,27 @@ function updatePointsVisual(id, pts, max){
   el.className = 'points-val' + (pts>0 ? (pts/max>=0.65?' hi':pts/max>=0.3?' mid':' on') : '');
 }
 
+function updateSgaReadout(){
+  const el = document.getElementById('derived-sga');
+  if(!el) return;
+  const ga = state.ga;
+  const bw = state.bw;
+  const cutoff = sgaCutoffGrams(ga);
+  if(cutoff===null || bw===null || bw===undefined || isNaN(bw)){
+    el.textContent = 'Informe peso e idade gestacional para calcular';
+    el.style.color = '';
+    return;
+  }
+  const gaLabel = ga===42 ? '≥ 42 sem' : `${ga} sem`;
+  if(bw < cutoff){
+    el.textContent = `PIG — ${fmtGrams(bw)} g < percentil 3 (${fmtGrams(cutoff)} g) para ${gaLabel}`;
+    el.style.color = 'var(--red)';
+  } else {
+    el.textContent = `Peso adequado — ${fmtGrams(bw)} g ≥ percentil 3 (${fmtGrams(cutoff)} g) para ${gaLabel}`;
+    el.style.color = '';
+  }
+}
+
 function recompute(){
   let total = 0;
   const contributions = [];
@@ -456,9 +529,12 @@ function recompute(){
     let val = state[f.id] ?? null;
     const pts = f.points(val);
     total += pts;
-    contributions.push({...f, pts});
-    updatePointsVisual(f.id, pts, f.max);
+    if(f.scored !== false){
+      contributions.push({...f, pts});
+      updatePointsVisual(f.id, pts, f.max);
+    }
   });
+  updateSgaReadout();
 
   const MAXTOTAL = 162;
   document.getElementById('totalScore').textContent = total;
@@ -515,9 +591,13 @@ fields.forEach(f=>{
     const sel = document.getElementById(`in-${f.id}`);
     sel.addEventListener('change', ()=>{
       const idx = sel.value === '' ? null : parseInt(sel.value, 10);
-      state[f.id] = idx===null ? null : f.options[idx].points;
+      if(idx===null){ state[f.id] = null; }
+      else if(f.storeRaw){ state[f.id] = f.options[idx].value; }
+      else { state[f.id] = f.options[idx].points; }
       recompute();
     });
+  } else if(f.type === 'derived'){
+    // read-only; recomputed from other fields inside recompute()/updateSgaReadout()
   } else if(f.type === 'number'){
     const input = document.getElementById(`in-${f.id}`);
     input.addEventListener('input', ()=>{
